@@ -15,7 +15,7 @@ startDate = datetime(2008, 2, 18); % Swap/Bond Start Date
 
 % Generate the 41 quarterly dates (T0 to T40 for 10 years)
 % 120 months = 10 years. This creates a column vector of dates.
-scheduleDates = startDate + calmonths(0:3:120)'; 
+scheduleDates = getAdjustedSchedule(startDate, 40, 'ModifiedFollowing');
 
 % Calculate Year Fractions from Evaluation Date
 % Using Act/360 (convention 2) for LMM time-to-maturities 

@@ -1,4 +1,31 @@
 function upfront(allStrikes,numPeriods,L,T_maturities,df_schedule,delta_i,spotVols)
+% UPFRONT Prices a structured bond and computes the required upfront percentage.
+%
+% PURPOSE:
+% This function calculates the Present Value (PV) of both legs of the structured 
+% swap/bond[cite: 39]. Leg A is a standard floating leg (Euribor 3m + spread) paid 
+% by the bank. Leg B is a structured coupon leg paid by the investor, containing 
+% caps, floors, and digital options[cite: 39]. It decomposes the structured payoff into 
+% vanilla components, prices them using Black's formula with the calibrated 
+% LMM spot volatilities, and finds the upfront percentage (X%) to balance the swap.
+%
+% INPUTS:
+%   allStrikes        - [1 x S] Array of strike rates used to locate the correct 
+%                       volatility columns.
+%   numPeriods        - [Scalar] Total number of quarterly payment periods (e.g., 40).
+%   L                 - [N x 1] Vector of forward Libor rates for each period.
+%   T_maturities      - [N x 1] Vector of time-to-maturities (Act/360) for 
+%                       the reset dates.
+%   df_schedule       - [(N+1) x 1] Vector of discount factors for the payment dates.
+%   delta_i           - [N x 1] Vector of daycount fractions (Act/360) for 
+%                       each period.
+%   spotVols          - [N x S] Matrix of calibrated LMM spot volatilities.
+%
+% OUTPUTS:
+%   (Implicit)        - Calculates and prints the PV of Leg A, the PV of Leg B, 
+%                       the absolute upfront amount in EUR, and the upfront 
+%                       percentage (X%) to the command window.
+
 % Bond Parameters
 Principal = 50e6; % 50 Million EUR
 

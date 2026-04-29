@@ -1,4 +1,31 @@
 function spotVols=spot_Vol_table(allStrikes,pillarYears,AugmentedVolTable,L,delta_i,df_schedule,T_maturities)
+% SPOT_VOL_TABLE Bootstraps LMM spot volatilities from market flat cap volatilities.
+%
+% PURPOSE:
+% This function calibrates the Libor Market Model (LMM) spot volatilities 
+% iteratively using market flat volatilities. It matches the market price of 
+% caps for given strikes and maturities by solving for the implied spot 
+% volatility of the underlying caplets.
+%
+% INPUTS:
+%   allStrikes        - [1 x S] Array of strike rates (in percentage, e.g., 4.20) 
+%                       corresponding to the columns in the augmented vol table.
+%   pillarYears       - [1 x P] Array of integers representing the market cap 
+%                       maturity pillars in years (e.g., 1:10).
+%   AugmentedVolTable - [P x S] Table or cell array containing flat volatilities 
+%                       interpolated for the specific derivative strikes.
+%   L                 - [N x 1] Vector of forward Libor rates for each period.
+%   delta_i           - [N x 1] Vector of daycount fractions (Act/360) for each 
+%                       quarterly period.
+%   df_schedule       - [(N+1) x 1] Vector of discount factors evaluated at 
+%                       the schedule dates.
+%   T_maturities      - [N x 1] Vector of time-to-maturities (Act/360) from 
+%                       the evaluation date to each reset date.
+%
+% OUTPUTS:
+%   spotVols          - [N x S] Matrix of calibrated LMM spot volatilities, 
+%                       where rows represent the caplet periods (quarters) 
+%                       and columns represent the specific strikes.
 spotVols = zeros(40, length(allStrikes));
 
 for s = 1:length(allStrikes)
