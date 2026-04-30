@@ -6,7 +6,7 @@ function AugmentedVolTable = getAugmentedVolGrid(FlatVolTable, originalStrikes)
     
     %% Define the Bond's Specific Trigger Strikes
     % These are the key levels found in the Party B payment terms 
-    targetStrikes = [3.80, 4.20, 4.70, 5.40];
+    targetStrikes = [4.20, 4.70, 5.40];
     
     %% Extraction and Initialization
     rawVols = table2array(FlatVolTable);

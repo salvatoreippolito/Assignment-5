@@ -3,9 +3,9 @@ function upfront(allStrikes,numPeriods,L,T_maturities,df_schedule,delta_i,spotVo
 %
 % PURPOSE:
 % This function calculates the Present Value (PV) of both legs of the structured 
-% swap/bond[cite: 39]. Leg A is a standard floating leg (Euribor 3m + spread) paid 
+% swap/bond. Leg A is a standard floating leg (Euribor 3m + spread) paid 
 % by the bank. Leg B is a structured coupon leg paid by the investor, containing 
-% caps, floors, and digital options[cite: 39]. It decomposes the structured payoff into 
+% caps, floors, and digital options. It decomposes the structured payoff into 
 % vanilla components, prices them using Black's formula with the calibrated 
 % LMM spot volatilities, and finds the upfront percentage (X%) to balance the swap.
 %
@@ -33,8 +33,7 @@ Principal = 50e6; % 50 Million EUR
 % We divide by 100 just in case allStrikes is in percentage format (e.g., 4.20)
 idx_K1 = find(abs(allStrikes - 4.2) < 1e-4);
 idx_K2 = find(abs(allStrikes - 4.7) < 1e-4);
-idx_K3 = find(abs(allStrikes - 3.8) < 1e-4);
-idx_K4 = find(abs(allStrikes - 5.4) < 1e-4);
+idx_K3 = find(abs(allStrikes - 5.4) < 1e-4);
 
 % Initialize Present Values
 PV_LegA = 0; % Euribor 3m + 2.00%
@@ -92,27 +91,19 @@ for q = 1:numPeriods
         PV_LegB = PV_LegB + PV_Coupon * delta * Principal;
         
     elseif q >= 25 && q <= 40
-        % After Year 6: L + 1.30% capped at 5.10% if L <= 5.40% else 5.60%
-        % Decomposition: Floater - Caplet(3.80%) + CashDigital(5.40%, payout 0.50%)
-        
-        % The Caplet (Strike 3.80%)
-        K_cap = 0.038;
+        % After Year 6: L + 1.30% if L <= 5.40% else 5.60%
+        K_cap = 0.054;
         sigma_cap = spotVols(q-1, idx_K3);
+        
         d1_cap = (log(F/K_cap) + 0.5 * sigma_cap^2 * T_reset) / (sigma_cap * sqrt(T_reset));
         d2_cap = d1_cap - sigma_cap * sqrt(T_reset);
-        Caplet_val = DF_pay * (F * normcdf(d1_cap) - K_cap * normcdf(d2_cap));
         
-        % The Cash Digital (Strike 5.40%)
-        K_dig = 0.054;
-        sigma_dig = spotVols(q-1, idx_K4);
-        d1_dig = (log(F/K_dig) + 0.5 * sigma_dig^2 * T_reset) / (sigma_dig * sqrt(T_reset));
-        d2_dig = d1_dig - sigma_dig * sqrt(T_reset);
-        CashDig_val = DF_pay * 0.005 * normcdf(d2_dig); % 0.50% jump
-        
-        % The Base Floater
+        % Value the components
         PV_float = DF_pay * (F + 0.013);
+        AssetDig = DF_pay * F * normcdf(d1_cap);
+        CashDig  = DF_pay * (0.013 - 0.056) * normcdf(d2_cap);
         
-        PV_Coupon = PV_float - Caplet_val + CashDig_val;
+        PV_Coupon = PV_float - (AssetDig + CashDig);
         PV_LegB = PV_LegB + PV_Coupon * delta * Principal;
     end
 end
