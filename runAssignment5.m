@@ -54,3 +54,19 @@ spotVols=spot_Vol_table(allStrikes,pillarYears,AugmentedVolTable,L,delta_i,df_sc
 upfront(allStrikes,numPeriods,L,T_maturities,df_schedule,delta_i,spotVols)
 
 %% Point c
+%% Case Study 2 - Exotic Cap
+
+% Act/365 year fractions required for the BMM correlation structure
+T_maturities_365 = yearfrac(refDate, scheduleDates, 3);
+
+% Spot volatilities calibrated in Point a, used as BMM spot vol input
+bmmSpotVols = spotVols;
+
+% Price the exotic cap with BMM Monte Carlo
+[priceExotic, stdErrorExotic] = exotic_cap_BMM(L, df_schedule, delta_i, T_maturities_365, bmmSpotVols, allStrikes);
+
+% Display results
+disp('--- CASE STUDY 2: EXOTIC CAP ---');
+fprintf('Price per unit notional: %.8f\n', priceExotic);
+fprintf('Monte Carlo standard error: %.8f\n', stdErrorExotic);
+fprintf('Price on 50M EUR notional: %.2f EUR\n', 50e6 * priceExotic);
