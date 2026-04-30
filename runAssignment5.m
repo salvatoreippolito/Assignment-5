@@ -5,7 +5,7 @@ clear;
 % Augment it with the bond's triggers
 AugmentedVolTable = getAugmentedVolGrid(FlatVolTable, originalStrikes);
 % Discount curve
-[datesSet, ratesSet] = readExcelDataWindows('MktData_CurveBootstrap.xlsx', 'dd/mm/yyyy');
+[datesSet, ratesSet] = readExcelDataWindows('MktData_CurveBootstrap.xlsx');
 % Bootstrap
 [dates, discounts, zeroRates]=bootstrap(datesSet, ratesSet); 
 date_leggibili_dt = datetime(dates, 'ConvertFrom', 'datenum', 'Format', 'dd/MM/yyyy');
@@ -54,19 +54,26 @@ spotVols=spot_Vol_table(allStrikes,pillarYears,AugmentedVolTable,L,delta_i,df_sc
 upfront(allStrikes,numPeriods,L,T_maturities,df_schedule,delta_i,spotVols)
 
 %% Point c
-%% Case Study 2 - Exotic Cap
+disp('--- Computing Delta-Bucket Sensitivities ---');
 
-% Act/365 year fractions required for the BMM correlation structure
-T_maturities_365 = yearfrac(refDate, scheduleDates, 3);
+delta_buckets = computeDeltaBuckets(allStrikes, numPeriods, L, T_maturities, df_schedule, delta_i, spotVols);
 
-% Spot volatilities calibrated in Point a, used as BMM spot vol input
-bmmSpotVols = spotVols;
+for i = 1:numPeriods
+    fprintf('Bucket %2d (T = %.2f yrs) : Delta = %10.2f EUR / bp\n', i, T_maturities(i+1), delta_buckets(i));
+end
 
-% Price the exotic cap with BMM Monte Carlo
-[priceExotic, stdErrorExotic] = exotic_cap_BMM(L, df_schedule, delta_i, T_maturities_365, bmmSpotVols, allStrikes);
+figure;
+bar(T_maturities(2:end), delta_buckets, 'FaceColor', [0.2 0.6 0.8]);
+grid on;
+title('Delta-Bucket Sensitivities (Upfront PV change per 1 bp shift in Forward Rate)');
+xlabel('Forward Rate Maturity (Years)');
+ylabel('Sensitivity (EUR / bp)');
+xlim([0, T_maturities(end) + 0.5]);
 
-% Display results
-disp('--- CASE STUDY 2: EXOTIC CAP ---');
-fprintf('Price per unit notional: %.8f\n', priceExotic);
-fprintf('Monte Carlo standard error: %.8f\n', stdErrorExotic);
-fprintf('Price on 50M EUR notional: %.2f EUR\n', 50e6 * priceExotic);
+%% Point d : Compute total Vega
+disp('--- Computing Total Vega ---');
+
+% Computation of Vega
+total_vega = computeTotalVega(allStrikes, pillarYears, AugmentedVolTable, spotVols, L, T_maturities, df_schedule, delta_i, numPeriods);
+
+fprintf('Total Vega (Sensitivity to +1 bp parallel shift in Flat Vols) : %10.2f EUR / bp\n\n', total_vega);
