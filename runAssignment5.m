@@ -5,7 +5,7 @@ clear;
 % Augment it with the bond's triggers
 AugmentedVolTable = getAugmentedVolGrid(FlatVolTable, originalStrikes);
 % Discount curve
-[datesSet, ratesSet] = readExcelDataWindows('MktData_CurveBootstrap.xlsx');
+[datesSet, ratesSet] = readExcelDataWindows('MktData_CurveBootstrap.xlsx', 'dd/mm/yyyy');
 % Bootstrap
 [dates, discounts, zeroRates]=bootstrap(datesSet, ratesSet); 
 date_leggibili_dt = datetime(dates, 'ConvertFrom', 'datenum', 'Format', 'dd/MM/yyyy');
