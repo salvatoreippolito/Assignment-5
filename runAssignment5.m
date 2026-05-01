@@ -77,3 +77,54 @@ disp('--- Computing Total Vega ---');
 total_vega = computeTotalVega(allStrikes, pillarYears, AugmentedVolTable, spotVols, L, T_maturities, df_schedule, delta_i, numPeriods);
 
 fprintf('Total Vega (Sensitivity to +1 bp parallel shift in Flat Vols) : %10.2f EUR / bp\n\n', total_vega);
+
+%% Point e : Delta hedge with 3 swaps (coarse-grained buckets)
+disp('--- Point e: Delta Hedge (Coarse-Grained Buckets) ---');
+
+bucketEdges  = [0, 2, 6, 10];
+swapMaturities = [2, 6, 10];  % years — longest first in the solve
+
+% Coarse-grained deltas of the bond
+cg_bond_deltas = computeCoarseGrainedBuckets(delta_buckets, T_maturities, bucketEdges);
+fprintf('Coarse-grained bond deltas:\n');
+for k = 1:length(swapMaturities)
+    fprintf('  Bucket %dy-%dy : %10.2f EUR/bp\n', bucketEdges(k), bucketEdges(k+1), cg_bond_deltas(k));
+end
+
+% Solve for swap notionals (system is ~lower-triangular: start longest)
+[N_swaps, par_rates] = hedgeDeltaCoarseGrained(cg_bond_deltas, swapMaturities, ...
+    allStrikes, numPeriods, L, T_maturities, df_schedule, delta_i, spotVols, bucketEdges);
+
+fprintf('\nDelta hedge — Receiver IRS notionals:\n');
+for j = 1:length(swapMaturities)
+    fprintf('  %2dy Receiver IRS : N = %12.0f EUR  (par rate = %.4f%%)\n', ...
+        swapMaturities(j), N_swaps(j), par_rates(j)*100);
+end
+
+%% Point f : Vega hedge with 6y and 10y ATM Caps
+disp('--- Point f: Vega Hedge (Bucketed Vega) ---');
+
+vegaBucketEdges = [0, 6, 10];
+capMaturities   = [6, 10];  % years — longest first in the solve
+
+% Bucketed vega of the bond
+bv_bond = computeBucketedVega(allStrikes, pillarYears, AugmentedVolTable, spotVols, ...
+    L, T_maturities, df_schedule, delta_i, numPeriods, vegaBucketEdges);
+
+fprintf('Bucketed bond vega:\n');
+for k = 1:length(capMaturities)
+    fprintf('  Bucket %dy-%dy : %10.2f EUR/bp\n', vegaBucketEdges(k), vegaBucketEdges(k+1), bv_bond(k));
+end
+
+% Solve for cap notionals (start longest)
+N_caps = hedgeVegaBucketed(bv_bond, capMaturities, allStrikes, pillarYears, ...
+    AugmentedVolTable, L, T_maturities, df_schedule, delta_i, numPeriods, vegaBucketEdges);
+
+fprintf('\nVega hedge — Long ATM Cap notionals:\n');
+for j = 1:length(capMaturities)
+    capPeriods_j = round(capMaturities(j) * 4);
+    BPV_j = sum(delta_i(1:capPeriods_j) .* df_schedule(2:capPeriods_j+1));
+    atm_j = (df_schedule(1) - df_schedule(capPeriods_j+1)) / BPV_j;
+    fprintf('  %2dy ATM Cap (K = %.4f%%) : N = %12.0f EUR\n', ...
+        capMaturities(j), atm_j*100, N_caps(j));
+end
