@@ -49,7 +49,7 @@ numCaplets = 40; % 10 years * 4 quarters
 
 %% Point a
 spotVols=spot_Vol_table(allStrikes,pillarYears,AugmentedVolTable,L,delta_i,df_schedule,T_maturities);
-
+disp(spotVols)
 %% Point b
 upfront(allStrikes,numPeriods,L,T_maturities,df_schedule,delta_i,spotVols)
 
