@@ -128,3 +128,15 @@ for j = 1:length(capMaturities)
     fprintf('  %2dy ATM Cap (K = %.4f%%) : N = %12.0f EUR\n', ...
         capMaturities(j), atm_j*100, N_caps(j));
 end
+%% Case Study 2 - Exotic Cap
+
+T_maturities_365 = yearfrac(refDate, scheduleDates, 3);
+
+bmmSpotVols = spotVols;
+
+[priceExotic, stdErrorExotic] = exotic_cap_BMM(L, df_schedule, delta_i, T_maturities_365, bmmSpotVols, allStrikes);
+
+disp('--- CASE STUDY 2: EXOTIC CAP ---');
+fprintf('Prezzo per unità di nozionale: %.8f\n', priceExotic);
+fprintf('Errore standard Monte Carlo: %.8f\n', stdErrorExotic);
+fprintf('Prezzo su nozionale 50M EUR: %.2f EUR\n', 50e6 * priceExotic);
